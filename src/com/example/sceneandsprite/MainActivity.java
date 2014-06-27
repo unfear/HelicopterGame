@@ -20,6 +20,7 @@ import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.opengl.font.Font;
@@ -46,6 +47,8 @@ public class MainActivity extends BaseGameActivity {
     private static final int WIDTH = 532;
     private static final int HEIGHT = 320;
 
+    private static final int BIRD_SPEED = 5;
+
     // Declare a Camera object for our activity
     private Camera mCamera;
 
@@ -56,9 +59,11 @@ public class MainActivity extends BaseGameActivity {
     private TiledTextureRegion mHelicopterTextureRegion;
     private TiledTextureRegion mBirdTextureRegion;
     private BitmapTextureAtlas mBitmapTextureAtlasControllBtn;
+    private BitmapTextureAtlas mBitmapTextureAtlasClouds;
 
     private ITextureRegion mControllBtnRegion;
     private ITextureRegion mOnScreenControlKnobTextureRegion;
+    private ITextureRegion mClouds;
     private DigitalOnScreenControl mDigitalOnScreenControl;
 
     private AnimatedSprite mAnimatedBirdSprite;
@@ -68,6 +73,10 @@ public class MainActivity extends BaseGameActivity {
     private AnimatedSprite mAnimatedFifthBirdSprite;
     private AnimatedSprite mAnimatedSixthBirdSprite;
 
+    private Sprite mCloudsSprite1;
+    private Sprite mCloudsSprite2;
+    private Sprite mCloudsSprite3;
+    
     Music mMusic;
     Sound mSound;
 
@@ -121,6 +130,9 @@ public class MainActivity extends BaseGameActivity {
         /* Create the TiledTextureRegion object, passing in the usual
         parameters, as well as the number of rows and columns in our sprite sheet
         for the final two parameters */
+        mBitmapTextureAtlasClouds = new BitmapTextureAtlas(this.getTextureManager(), 100, 50);
+        mClouds = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlasClouds, this, "cloud.png", 0, 0);
+
         mBirdTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, this, 
                                                                                             "bird.png", 3, 4);
         mHelicopterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this,
@@ -136,7 +148,9 @@ public class MainActivity extends BaseGameActivity {
         }
 
         mBitmapTextureAtlas.load();
+        mBitmapTextureAtlasClouds.load();
         mBitmapTextureAtlasControllBtn.load();
+        
 
         /* Set the base path for our SoundFactory and MusicFactory to
          * define where they will look for audio files.
@@ -182,6 +196,10 @@ public class MainActivity extends BaseGameActivity {
         mScene = new Scene();
         mScene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
 
+        mCloudsSprite1 = new Sprite(0, 0, this.mClouds, this.getVertexBufferObjectManager());
+        mCloudsSprite2 = new Sprite(0, 100, this.mClouds, this.getVertexBufferObjectManager());
+        mCloudsSprite3 = new Sprite(0, 200, this.mClouds, this.getVertexBufferObjectManager());
+
         /* Continuously flying helicopter. */
         final AnimatedSprite helicopter = new AnimatedSprite(320, HEIGHT - 128, this.mHelicopterTextureRegion, this.getVertexBufferObjectManager());
         helicopter.animate(new long[] { 100, 100 }, 1, 2, true);
@@ -212,6 +230,9 @@ public class MainActivity extends BaseGameActivity {
                 this.getVertexBufferObjectManager());
         mAnimatedSixthBirdSprite.animate(new long[] { 250, 310, 250 }, 6, 8, true);
 
+        mScene.attachChild(mCloudsSprite1);
+        mScene.attachChild(mCloudsSprite2);
+        mScene.attachChild(mCloudsSprite3);
         mScene.attachChild(helicopter);
         mScene.attachChild(mAnimatedBirdSprite);
         mScene.attachChild(mAnimatedSecondBirdSprite);
@@ -226,40 +247,55 @@ public class MainActivity extends BaseGameActivity {
         mScene.attachChild(scoreLeft);
 
         /* Make the Bird move every 0.2 seconds. */
-        mScene.registerUpdateHandler(new TimerHandler(0.2f, true, new ITimerCallback() {
+        mScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {
             @Override
             public void onTimePassed(final TimerHandler pTimerHandler)
             {
-                float xPos = mAnimatedBirdSprite.getX() + 10;
+                float xPos = mAnimatedBirdSprite.getX() + 5;
                 if(xPos > WIDTH - mAnimatedBirdSprite.getWidth())
                     xPos = 0;
 
-                float x2Pos = mAnimatedSecondBirdSprite.getX() + 10;
+                float x2Pos = mAnimatedSecondBirdSprite.getX() + BIRD_SPEED;
                 if(x2Pos > WIDTH - mAnimatedSecondBirdSprite.getWidth())
                     x2Pos = 0;
                 
-                float x3Pos = mAnimatedThirdBirdSprite.getX() + 10;
+                float x3Pos = mAnimatedThirdBirdSprite.getX() + BIRD_SPEED;
                 if(x3Pos > WIDTH - mAnimatedThirdBirdSprite.getWidth())
                     x3Pos = 0;
                 
-                float x4Pos = mAnimatedFourthBirdSprite.getX() + 10;
+                float x4Pos = mAnimatedFourthBirdSprite.getX() + BIRD_SPEED;
                 if(x4Pos > WIDTH - mAnimatedFourthBirdSprite.getWidth())
                     x4Pos = 0;
                 
-                float x5Pos = mAnimatedFifthBirdSprite.getX() + 10;
+                float x5Pos = mAnimatedFifthBirdSprite.getX() + BIRD_SPEED;
                 if(x5Pos > WIDTH - mAnimatedFifthBirdSprite.getWidth())
                     x5Pos = 0;
-                
-                float x6Pos = mAnimatedSixthBirdSprite.getX() + 10;
+
+                float x6Pos = mAnimatedSixthBirdSprite.getX() + BIRD_SPEED;
                 if(x6Pos > WIDTH - mAnimatedSixthBirdSprite.getWidth())
                     x6Pos = 0;
 
-                updateBirdPosition(xPos, mAnimatedBirdSprite.getY(), mAnimatedBirdSprite);
-                updateBirdPosition(x2Pos, mAnimatedSecondBirdSprite.getY(), mAnimatedSecondBirdSprite);
-                updateBirdPosition(x3Pos, mAnimatedThirdBirdSprite.getY(), mAnimatedThirdBirdSprite);
-                updateBirdPosition(x4Pos, mAnimatedFourthBirdSprite.getY(), mAnimatedFourthBirdSprite);
-                updateBirdPosition(x5Pos, mAnimatedFifthBirdSprite.getY(), mAnimatedFifthBirdSprite);
-                updateBirdPosition(x6Pos, mAnimatedSixthBirdSprite.getY(), mAnimatedSixthBirdSprite);
+                float x7Pos = mCloudsSprite1.getX() + 2;
+                if(x7Pos > WIDTH)
+                    x7Pos = -mCloudsSprite1.getWidth();
+
+                float x8Pos = mCloudsSprite2.getX() + 3;
+                if(x8Pos > WIDTH)
+                    x8Pos = -mCloudsSprite2.getWidth();
+
+                float x9Pos = mCloudsSprite3.getX() + 1;
+                if(x9Pos > WIDTH)
+                    x9Pos = -mCloudsSprite3.getWidth();
+
+                updateFlyingObjPosition(xPos, mAnimatedBirdSprite.getY(), mAnimatedBirdSprite);
+                updateFlyingObjPosition(x2Pos, mAnimatedSecondBirdSprite.getY(), mAnimatedSecondBirdSprite);
+                updateFlyingObjPosition(x3Pos, mAnimatedThirdBirdSprite.getY(), mAnimatedThirdBirdSprite);
+                updateFlyingObjPosition(x4Pos, mAnimatedFourthBirdSprite.getY(), mAnimatedFourthBirdSprite);
+                updateFlyingObjPosition(x5Pos, mAnimatedFifthBirdSprite.getY(), mAnimatedFifthBirdSprite);
+                updateFlyingObjPosition(x6Pos, mAnimatedSixthBirdSprite.getY(), mAnimatedSixthBirdSprite);
+                updateFlyingObjPosition(x7Pos, mCloudsSprite1.getY(), mCloudsSprite1);
+                updateFlyingObjPosition(x8Pos, mCloudsSprite2.getY(), mCloudsSprite2);
+                updateFlyingObjPosition(x9Pos, mCloudsSprite3.getY(), mCloudsSprite3);
 
                 if(mAnimatedBirdSprite.collidesWith(helicopter) || mAnimatedSecondBirdSprite.collidesWith(helicopter)
                    || mAnimatedThirdBirdSprite.collidesWith(helicopter) || mAnimatedFourthBirdSprite.collidesWith(helicopter)
@@ -335,7 +371,7 @@ public class MainActivity extends BaseGameActivity {
         pOnPopulateSceneCallback.onPopulateSceneFinished();
     }
 
-    public void updateBirdPosition(final float pX, final float pY, AnimatedSprite sprite)
+    public void updateFlyingObjPosition(final float pX, final float pY, Sprite sprite)
     {
         sprite.setPosition(pX, pY);
     }
