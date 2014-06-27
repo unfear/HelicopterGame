@@ -6,8 +6,6 @@ import org.andengine.audio.music.Music;
 import org.andengine.audio.music.MusicFactory;
 import org.andengine.audio.sound.Sound;
 import org.andengine.audio.sound.SoundFactory;
-import org.andengine.engine.Engine;
-import org.andengine.engine.FixedStepEngine;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.camera.hud.controls.BaseOnScreenControl;
 import org.andengine.engine.camera.hud.controls.DigitalOnScreenControl;
@@ -18,17 +16,12 @@ import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
-import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-import org.andengine.entity.Entity;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
-import org.andengine.entity.sprite.AnimatedSprite.IAnimationListener;
-import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
-import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.ITexture;
@@ -39,26 +32,19 @@ import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSource;
 import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
 import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder.TextureAtlasBuilderException;
-import org.andengine.opengl.texture.bitmap.BitmapTextureFormat;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
-import org.andengine.util.color.Color;
-import org.andengine.util.debug.Debug;
 
 import android.opengl.GLES20;
-import android.util.Log;
 import android.util.SparseArray;
 
 public class MainActivity extends BaseGameActivity {
 
-    private static final String TAG = "SceneAndSprite";
- // The following constants will be used to define the width and height
+     // The following constants will be used to define the width and height
     // of our game's camera view
     private static final int WIDTH = 532;
     private static final int HEIGHT = 320;
-//    private static final int WIDTH = 1920;
-//    private static final int HEIGHT = 1080;
 
     // Declare a Camera object for our activity
     private Camera mCamera;
@@ -66,9 +52,7 @@ public class MainActivity extends BaseGameActivity {
     // Declare a Scene object for our activity
     private Scene mScene;
     
-    private ITextureRegion mSpriteTextureRegion;
     BuildableBitmapTextureAtlas mBitmapTextureAtlas;
-    private TiledTextureRegion mTiledTextureRegion;
     private TiledTextureRegion mHelicopterTextureRegion;
     private TiledTextureRegion mBirdTextureRegion;
     private BitmapTextureAtlas mBitmapTextureAtlasControllBtn;
