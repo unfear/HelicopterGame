@@ -48,6 +48,8 @@ public class MainActivity extends BaseGameActivity {
     private static final int HEIGHT = 320;
 
     private static final int BIRD_SPEED = 5;
+    private static int BIRD_COUNTER = 0;
+    private static int HEALTH_COUNTER = 5;
 
     // Declare a Camera object for our activity
     private Camera mCamera;
@@ -60,10 +62,13 @@ public class MainActivity extends BaseGameActivity {
     private TiledTextureRegion mBirdTextureRegion;
     private BitmapTextureAtlas mBitmapTextureAtlasControllBtn;
     private BitmapTextureAtlas mBitmapTextureAtlasClouds;
+    private BitmapTextureAtlas mBitmapTextureAtlasBullet;
+    private TiledTextureRegion mExplodeTextureRegion;
 
     private ITextureRegion mControllBtnRegion;
     private ITextureRegion mOnScreenControlKnobTextureRegion;
     private ITextureRegion mClouds;
+    private ITextureRegion mBullet;
     private DigitalOnScreenControl mDigitalOnScreenControl;
 
     private AnimatedSprite mAnimatedBirdSprite;
@@ -72,17 +77,19 @@ public class MainActivity extends BaseGameActivity {
     private AnimatedSprite mAnimatedFourthBirdSprite;
     private AnimatedSprite mAnimatedFifthBirdSprite;
     private AnimatedSprite mAnimatedSixthBirdSprite;
+    private AnimatedSprite mAnimatedExplodeSprite;
 
     private Sprite mCloudsSprite1;
     private Sprite mCloudsSprite2;
     private Sprite mCloudsSprite3;
+    
+    private Sprite mBulletSprite;
     
     Music mMusic;
     Sound mSound;
 
     private final SparseArray<Text> mScoreTextMap = new SparseArray<Text>();
     private Font mScoreFont;
-    private int mScore = 0;
     /*
      * The onCreateEngineOptions method is responsible for creating the options to be
      * applied to the Engine object once it is created. The options include,
@@ -125,16 +132,24 @@ public class MainActivity extends BaseGameActivity {
 
         /* Create the texture atlas at the same dimensions as the image
         (300x50)*/
-        mBitmapTextureAtlas = new BuildableBitmapTextureAtlas(mEngine.getTextureManager(), 768, 512, 
+        mBitmapTextureAtlas = new BuildableBitmapTextureAtlas(mEngine.getTextureManager(), 1359, 630, 
                                                             TextureOptions.BILINEAR);
         /* Create the TiledTextureRegion object, passing in the usual
         parameters, as well as the number of rows and columns in our sprite sheet
         for the final two parameters */
         mBitmapTextureAtlasClouds = new BitmapTextureAtlas(this.getTextureManager(), 100, 50);
+        mBitmapTextureAtlasBullet = new BitmapTextureAtlas(this.getTextureManager(), 10, 12);
+
         mClouds = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlasClouds, this, "cloud.png", 0, 0);
+
+        mBullet = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlasBullet, this, "bullet.png", 0, 0);
 
         mBirdTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, this, 
                                                                                             "bird.png", 3, 4);
+
+        mExplodeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, this, 
+                                                                                                "explosion.png", 5, 1);
+
         mHelicopterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this,
                                                                                             "helicopter_tiled.png", 2, 2);
         mBitmapTextureAtlasControllBtn = new BitmapTextureAtlas(this.getTextureManager(), 256, 128);
@@ -149,8 +164,8 @@ public class MainActivity extends BaseGameActivity {
 
         mBitmapTextureAtlas.load();
         mBitmapTextureAtlasClouds.load();
+        mBitmapTextureAtlasBullet.load();
         mBitmapTextureAtlasControllBtn.load();
-        
 
         /* Set the base path for our SoundFactory and MusicFactory to
          * define where they will look for audio files.
@@ -203,7 +218,8 @@ public class MainActivity extends BaseGameActivity {
         /* Continuously flying helicopter. */
         final AnimatedSprite helicopter = new AnimatedSprite(320, HEIGHT - 128, this.mHelicopterTextureRegion, this.getVertexBufferObjectManager());
         helicopter.animate(new long[] { 100, 100 }, 1, 2, true);
-        
+
+        mBulletSprite = new Sprite(-20, -20, this.mBullet, this.getVertexBufferObjectManager());
         /* Create a new animated sprite in the center of the scene */
 
         mAnimatedBirdSprite = new AnimatedSprite(120, 10, mBirdTextureRegion, 
@@ -230,9 +246,13 @@ public class MainActivity extends BaseGameActivity {
                 this.getVertexBufferObjectManager());
         mAnimatedSixthBirdSprite.animate(new long[] { 250, 310, 250 }, 6, 8, true);
 
+        mAnimatedExplodeSprite = new AnimatedSprite(-100, -100, mExplodeTextureRegion, 
+                this.getVertexBufferObjectManager());
+
         mScene.attachChild(mCloudsSprite1);
         mScene.attachChild(mCloudsSprite2);
         mScene.attachChild(mCloudsSprite3);
+        mScene.attachChild(mBulletSprite);
         mScene.attachChild(helicopter);
         mScene.attachChild(mAnimatedBirdSprite);
         mScene.attachChild(mAnimatedSecondBirdSprite);
@@ -240,11 +260,17 @@ public class MainActivity extends BaseGameActivity {
         mScene.attachChild(mAnimatedFourthBirdSprite);
         mScene.attachChild(mAnimatedFifthBirdSprite);
         mScene.attachChild(mAnimatedSixthBirdSprite);
+        mScene.attachChild(mAnimatedExplodeSprite);
 
         final Text scoreLeft = new Text(0, 0, this.mScoreFont, "Score: 0", 10, this.getVertexBufferObjectManager());
         scoreLeft.setPosition(0, scoreLeft.getY());
         this.mScoreTextMap.put(0, scoreLeft);
         mScene.attachChild(scoreLeft);
+
+        final Text healthRight = new Text(0, 0, this.mScoreFont, "Health: 5", 10, this.getVertexBufferObjectManager());
+        healthRight.setPosition(WIDTH-200, 0);
+        this.mScoreTextMap.put(1, healthRight);
+        mScene.attachChild(healthRight);
 
         /* Make the Bird move every 0.2 seconds. */
         mScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {
@@ -287,6 +313,15 @@ public class MainActivity extends BaseGameActivity {
                 if(x9Pos > WIDTH)
                     x9Pos = -mCloudsSprite3.getWidth();
 
+                float xBulletPos = mBulletSprite.getX() - 10;
+                float yBulletPos = mBulletSprite.getY();
+
+                if(xBulletPos < 0)
+                {
+                    xBulletPos = helicopter.getX();
+                    yBulletPos = helicopter.getY();
+                }
+                
                 updateFlyingObjPosition(xPos, mAnimatedBirdSprite.getY(), mAnimatedBirdSprite);
                 updateFlyingObjPosition(x2Pos, mAnimatedSecondBirdSprite.getY(), mAnimatedSecondBirdSprite);
                 updateFlyingObjPosition(x3Pos, mAnimatedThirdBirdSprite.getY(), mAnimatedThirdBirdSprite);
@@ -296,6 +331,7 @@ public class MainActivity extends BaseGameActivity {
                 updateFlyingObjPosition(x7Pos, mCloudsSprite1.getY(), mCloudsSprite1);
                 updateFlyingObjPosition(x8Pos, mCloudsSprite2.getY(), mCloudsSprite2);
                 updateFlyingObjPosition(x9Pos, mCloudsSprite3.getY(), mCloudsSprite3);
+                updateFlyingObjPosition(xBulletPos, yBulletPos, mBulletSprite);
 
                 if(mAnimatedBirdSprite.collidesWith(helicopter) || mAnimatedSecondBirdSprite.collidesWith(helicopter)
                    || mAnimatedThirdBirdSprite.collidesWith(helicopter) || mAnimatedFourthBirdSprite.collidesWith(helicopter)
@@ -306,8 +342,8 @@ public class MainActivity extends BaseGameActivity {
                         mSound.play();
                         helicopter.setCurrentTileIndex(3);
                         helicopter.stopAnimation(3);
-                        mScore++;
-                        updateScore(0, mScore);
+                        HEALTH_COUNTER--;
+                        updateHealth(1, HEALTH_COUNTER);
                     }
                 }
                 else
@@ -318,6 +354,58 @@ public class MainActivity extends BaseGameActivity {
                         helicopter.animate(new long[] { 100, 100 }, 1, 2, true);
                     }
                 }
+                final int ACCURACY = 30;
+                if(mAnimatedBirdSprite.collidesWith(mBulletSprite))
+                {
+                    mAnimatedExplodeSprite.setPosition(mAnimatedBirdSprite.getX() - ACCURACY, mAnimatedBirdSprite.getY() - ACCURACY);
+                    updateFlyingObjPosition(0, mAnimatedBirdSprite.getY(), mAnimatedBirdSprite);
+                    mAnimatedExplodeSprite.animate(new long[] { 50, 50, 50, 50, 50 }, 0, 4, false);
+                    updateFlyingObjPosition(helicopter.getX(), helicopter.getY(), mBulletSprite);
+                    BIRD_COUNTER++;
+                }
+                else if(mAnimatedSecondBirdSprite.collidesWith(mBulletSprite))
+                {
+                    mAnimatedExplodeSprite.setPosition(mAnimatedSecondBirdSprite.getX() - ACCURACY, mAnimatedSecondBirdSprite.getY() - ACCURACY);
+                    updateFlyingObjPosition(0, mAnimatedSecondBirdSprite.getY(), mAnimatedSecondBirdSprite);
+                    mAnimatedExplodeSprite.animate(new long[] { 50, 50, 50, 50, 50 }, 0, 4, false);
+                    updateFlyingObjPosition(helicopter.getX(), helicopter.getY(), mBulletSprite);
+                    BIRD_COUNTER++;
+                }
+                else if(mAnimatedThirdBirdSprite.collidesWith(mBulletSprite))
+                {
+                    mAnimatedExplodeSprite.setPosition(mAnimatedThirdBirdSprite.getX() - ACCURACY, mAnimatedThirdBirdSprite.getY() - ACCURACY);
+                    updateFlyingObjPosition(0, mAnimatedThirdBirdSprite.getY(), mAnimatedThirdBirdSprite);
+                    mAnimatedExplodeSprite.animate(new long[] { 50, 50, 50, 50, 50 }, 0, 4, false);
+                    updateFlyingObjPosition(helicopter.getX(), helicopter.getY(), mBulletSprite);
+                    BIRD_COUNTER++;
+                }
+                else if(mAnimatedFourthBirdSprite.collidesWith(mBulletSprite))
+                {
+                    mAnimatedExplodeSprite.setPosition(mAnimatedFourthBirdSprite.getX() - ACCURACY, mAnimatedFourthBirdSprite.getY() - ACCURACY);
+                    updateFlyingObjPosition(0, mAnimatedFourthBirdSprite.getY(), mAnimatedFourthBirdSprite);
+                    mAnimatedExplodeSprite.animate(new long[] { 50, 50, 50, 50, 50 }, 0, 4, false);
+                    updateFlyingObjPosition(helicopter.getX(), helicopter.getY(), mBulletSprite);
+                    BIRD_COUNTER++;
+                }
+                else if(mAnimatedFifthBirdSprite.collidesWith(mBulletSprite))
+                {
+                    mAnimatedExplodeSprite.setPosition(mAnimatedFifthBirdSprite.getX() - ACCURACY, mAnimatedFifthBirdSprite.getY() - ACCURACY);
+                    updateFlyingObjPosition(0, mAnimatedFifthBirdSprite.getY(), mAnimatedFifthBirdSprite);
+                    mAnimatedExplodeSprite.animate(new long[] { 50, 50, 50, 50, 50 }, 0, 4, false);
+                    updateFlyingObjPosition(helicopter.getX(), helicopter.getY(), mBulletSprite);
+                    BIRD_COUNTER++;
+                }
+                else if(mAnimatedSixthBirdSprite.collidesWith(mBulletSprite))
+                {
+                    mAnimatedExplodeSprite.setPosition(mAnimatedSixthBirdSprite.getX() - ACCURACY, mAnimatedSixthBirdSprite.getY() - ACCURACY);
+                    updateFlyingObjPosition(0, mAnimatedSixthBirdSprite.getY(), mAnimatedSixthBirdSprite);
+                    mAnimatedExplodeSprite.animate(new long[] { 50, 50, 50, 50, 50 }, 0, 4, false);
+                    updateFlyingObjPosition(helicopter.getX(), helicopter.getY(), mBulletSprite);
+                    BIRD_COUNTER++;
+                }
+
+                if(HEALTH_COUNTER > 0)
+                    updateScore(0, BIRD_COUNTER);
 
                 if(helicopter.getX() > WIDTH)
                     helicopter.setX(WIDTH);
@@ -400,12 +488,23 @@ public class MainActivity extends BaseGameActivity {
     
     public void updateScore(final int pPaddleID, final int pPoints) {
         final Text scoreText = this.mScoreTextMap.get(pPaddleID);
-        if(pPoints >= 10)
-            scoreText.setText("GAME OVER");
+        if(pPoints >= 99)
+            scoreText.setText("YOU WIN");
         else
             scoreText.setText("Score: " + String.valueOf(pPoints));
 
         /* Adjust position of left Score, so that it doesn't overlap the middle line. */
         scoreText.setPosition(0, scoreText.getY());
+    }
+
+    public void updateHealth(final int pPaddleID, final int pPoints) {
+        final Text scoreText = this.mScoreTextMap.get(pPaddleID);
+        if(pPoints <= 0)
+            scoreText.setText("Game Over");
+        else
+            scoreText.setText("Health: " + String.valueOf(pPoints));
+
+        /* Adjust position of left Score, so that it doesn't overlap the middle line. */
+        scoreText.setPosition(WIDTH-200, 0);
     }
 }
