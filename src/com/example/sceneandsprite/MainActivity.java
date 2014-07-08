@@ -77,6 +77,7 @@ public class MainActivity extends BaseGameActivity {
     private AnimatedSprite mAnimatedFourthBirdSprite;
     private AnimatedSprite mAnimatedFifthBirdSprite;
     private AnimatedSprite mAnimatedSixthBirdSprite;
+    private AnimatedSprite mAnimatedVerticalBirdSprite;
     private AnimatedSprite mAnimatedExplodeSprite;
 
     private Sprite mCloudsSprite1;
@@ -222,6 +223,10 @@ public class MainActivity extends BaseGameActivity {
         mBulletSprite = new Sprite(-20, -20, this.mBullet, this.getVertexBufferObjectManager());
         /* Create a new animated sprite in the center of the scene */
 
+        mAnimatedVerticalBirdSprite = new AnimatedSprite(WIDTH / 2, HEIGHT, mBirdTextureRegion, 
+                this.getVertexBufferObjectManager());
+        mAnimatedVerticalBirdSprite.animate(new long[] { 200, 200, 200 }, 9, 11, true);
+
         mAnimatedBirdSprite = new AnimatedSprite(120, 10, mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedBirdSprite.animate(new long[] { 200, 200, 200 }, 6, 8, true);
@@ -260,6 +265,7 @@ public class MainActivity extends BaseGameActivity {
         mScene.attachChild(mAnimatedFourthBirdSprite);
         mScene.attachChild(mAnimatedFifthBirdSprite);
         mScene.attachChild(mAnimatedSixthBirdSprite);
+        mScene.attachChild(mAnimatedVerticalBirdSprite);
         mScene.attachChild(mAnimatedExplodeSprite);
 
         final Text scoreLeft = new Text(0, 0, this.mScoreFont, "Score: 0", 10, this.getVertexBufferObjectManager());
@@ -301,6 +307,14 @@ public class MainActivity extends BaseGameActivity {
                 if(x6Pos > WIDTH - mAnimatedSixthBirdSprite.getWidth())
                     x6Pos = 0;
 
+                float yVertPos = mAnimatedVerticalBirdSprite.getY() - 10;
+                float xVertPos = mAnimatedVerticalBirdSprite.getX();
+                if(yVertPos < 0 - mAnimatedVerticalBirdSprite.getHeight())
+                {
+                    yVertPos = HEIGHT;
+                    xVertPos = helicopter.getX();
+                }
+
                 float x7Pos = mCloudsSprite1.getX() + 2;
                 if(x7Pos > WIDTH)
                     x7Pos = -mCloudsSprite1.getWidth();
@@ -331,11 +345,13 @@ public class MainActivity extends BaseGameActivity {
                 updateFlyingObjPosition(x7Pos, mCloudsSprite1.getY(), mCloudsSprite1);
                 updateFlyingObjPosition(x8Pos, mCloudsSprite2.getY(), mCloudsSprite2);
                 updateFlyingObjPosition(x9Pos, mCloudsSprite3.getY(), mCloudsSprite3);
+                updateFlyingObjPosition(xVertPos, yVertPos, mAnimatedVerticalBirdSprite);
                 updateFlyingObjPosition(xBulletPos, yBulletPos, mBulletSprite);
 
                 if(mAnimatedBirdSprite.collidesWith(helicopter) || mAnimatedSecondBirdSprite.collidesWith(helicopter)
                    || mAnimatedThirdBirdSprite.collidesWith(helicopter) || mAnimatedFourthBirdSprite.collidesWith(helicopter)
-                   || mAnimatedFifthBirdSprite.collidesWith(helicopter) || mAnimatedSixthBirdSprite.collidesWith(helicopter) )
+                   || mAnimatedFifthBirdSprite.collidesWith(helicopter) || mAnimatedSixthBirdSprite.collidesWith(helicopter)
+                   || mAnimatedVerticalBirdSprite.collidesWith(helicopter) )
                 {
                     if(helicopter.isAnimationRunning())
                     {
