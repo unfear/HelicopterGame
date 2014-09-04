@@ -1,11 +1,5 @@
 package com.example.sceneandsprite;
 
-import java.io.IOException;
-
-import org.andengine.audio.music.Music;
-import org.andengine.audio.music.MusicFactory;
-import org.andengine.audio.sound.Sound;
-import org.andengine.audio.sound.SoundFactory;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.camera.hud.controls.BaseOnScreenControl;
 import org.andengine.engine.camera.hud.controls.DigitalOnScreenControl;
@@ -23,22 +17,8 @@ import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
-import org.andengine.opengl.font.Font;
-import org.andengine.opengl.font.FontFactory;
-import org.andengine.opengl.texture.ITexture;
-import org.andengine.opengl.texture.TextureOptions;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
-import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSource;
-import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
-import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder.TextureAtlasBuilderException;
-import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
-
 import android.opengl.GLES20;
-import android.util.SparseArray;
 
 public class MainActivity extends BaseGameActivity {
 
@@ -56,20 +36,6 @@ public class MainActivity extends BaseGameActivity {
 
     // Declare a Scene object for our activity
     private Scene mScene;
-    
-    BuildableBitmapTextureAtlas mBitmapTextureAtlas;
-    private TiledTextureRegion mHelicopterTextureRegion;
-    private TiledTextureRegion mBirdTextureRegion;
-    private BitmapTextureAtlas mBitmapTextureAtlasControllBtn;
-    private BitmapTextureAtlas mBitmapTextureAtlasClouds;
-    private BitmapTextureAtlas mBitmapTextureAtlasBullet;
-    private TiledTextureRegion mExplodeTextureRegion;
-
-    private ITextureRegion mControllBtnRegion;
-    private ITextureRegion mOnScreenControlKnobTextureRegion;
-    private ITextureRegion mClouds;
-    private ITextureRegion mBullet;
-    private DigitalOnScreenControl mDigitalOnScreenControl;
 
     private AnimatedSprite mAnimatedBirdSprite;
     private AnimatedSprite mAnimatedSecondBirdSprite;
@@ -85,12 +51,7 @@ public class MainActivity extends BaseGameActivity {
     private Sprite mCloudsSprite3;
     
     private Sprite mBulletSprite;
-    
-    Music mMusic;
-    Sound mSound;
 
-    private final SparseArray<Text> mScoreTextMap = new SparseArray<Text>();
-    private Font mScoreFont;
     /*
      * The onCreateEngineOptions method is responsible for creating the options to be
      * applied to the Engine object once it is created. The options include,
@@ -128,71 +89,8 @@ public class MainActivity extends BaseGameActivity {
     @Override
     public void onCreateResources(
             OnCreateResourcesCallback pOnCreateResourcesCallback) {
-
-        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-
-        /* Create the texture atlas at the same dimensions as the image
-        (300x50)*/
-        mBitmapTextureAtlas = new BuildableBitmapTextureAtlas(mEngine.getTextureManager(), 1359, 630, 
-                                                            TextureOptions.BILINEAR);
-        /* Create the TiledTextureRegion object, passing in the usual
-        parameters, as well as the number of rows and columns in our sprite sheet
-        for the final two parameters */
-        mBitmapTextureAtlasClouds = new BitmapTextureAtlas(this.getTextureManager(), 100, 50);
-        mBitmapTextureAtlasBullet = new BitmapTextureAtlas(this.getTextureManager(), 10, 12);
-
-        mClouds = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlasClouds, this, "cloud.png", 0, 0);
-
-        mBullet = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlasBullet, this, "bullet.png", 0, 0);
-
-        mBirdTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, this, 
-                                                                                            "bird.png", 3, 4);
-
-        mExplodeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, this, 
-                                                                                                "explosion.png", 5, 1);
-
-        mHelicopterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this,
-                                                                                            "helicopter_tiled.png", 2, 2);
-        mBitmapTextureAtlasControllBtn = new BitmapTextureAtlas(this.getTextureManager(), 256, 128);
-        mControllBtnRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlasControllBtn, this, "onscreen_control_base.png", 0, 0);
-        mOnScreenControlKnobTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlasControllBtn, this, "onscreen_control_knob.png", 128, 0);
-        /* Build and load the mBitmapTextureAtlas object */
-        try {
-            mBitmapTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
-        } catch (TextureAtlasBuilderException e) {
-            e.printStackTrace();
-        }
-
-        mBitmapTextureAtlas.load();
-        mBitmapTextureAtlasClouds.load();
-        mBitmapTextureAtlasBullet.load();
-        mBitmapTextureAtlasControllBtn.load();
-
-        /* Set the base path for our SoundFactory and MusicFactory to
-         * define where they will look for audio files.
-         */
-         SoundFactory.setAssetBasePath("sfx/");
-         MusicFactory.setAssetBasePath("sfx/");
-
-         // Load our "sound.mp3" file into a Sound object
-         try {
-             mSound = SoundFactory.createSoundFromAsset(getSoundManager(), this, "bigboom.wav");
-         } catch (IOException e) {
-             e.printStackTrace();
-         }
-         // Load our "music.mp3" file into a music object
-         try {
-             mMusic = MusicFactory.createMusicFromAsset(getMusicManager(), this, "music.mp3");
-             mMusic.setVolume(0.5f);
-         } catch (IOException e) {
-             e.printStackTrace();
-         }
-
-         final ITexture scoreFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
-
-         FontFactory.setAssetBasePath("font/");
-         this.mScoreFont = FontFactory.createFromAsset(this.getFontManager(), scoreFontTexture, this.getAssets(), "LCD.ttf", 32, true, android.graphics.Color.BLACK);
-         this.mScoreFont.load();
+        ResourceManager.getInstance().loadGameTextures(mEngine, this);
+        ResourceManager.getInstance().loadSounds(mEngine, this);
         /* We should notify the pOnCreateResourcesCallback that we've finished
          * loading all of the necessary resources in our game AFTER they are loaded.
          * onCreateResourcesFinished() should be the last method called.  */
@@ -212,46 +110,46 @@ public class MainActivity extends BaseGameActivity {
         mScene = new Scene();
         mScene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
 
-        mCloudsSprite1 = new Sprite(0, 0, this.mClouds, this.getVertexBufferObjectManager());
-        mCloudsSprite2 = new Sprite(0, 100, this.mClouds, this.getVertexBufferObjectManager());
-        mCloudsSprite3 = new Sprite(0, 200, this.mClouds, this.getVertexBufferObjectManager());
+        mCloudsSprite1 = new Sprite(0, 0, ResourceManager.getInstance().mClouds, this.getVertexBufferObjectManager());
+        mCloudsSprite2 = new Sprite(0, 100, ResourceManager.getInstance().mClouds, this.getVertexBufferObjectManager());
+        mCloudsSprite3 = new Sprite(0, 200, ResourceManager.getInstance().mClouds, this.getVertexBufferObjectManager());
 
         /* Continuously flying helicopter. */
-        final AnimatedSprite helicopter = new AnimatedSprite(320, HEIGHT - 128, this.mHelicopterTextureRegion, this.getVertexBufferObjectManager());
+        final AnimatedSprite helicopter = new AnimatedSprite(320, HEIGHT - 128, ResourceManager.getInstance().mHelicopterTextureRegion, this.getVertexBufferObjectManager());
         helicopter.animate(new long[] { 100, 100 }, 1, 2, true);
 
-        mBulletSprite = new Sprite(-20, -20, this.mBullet, this.getVertexBufferObjectManager());
+        mBulletSprite = new Sprite(-20, -20, ResourceManager.getInstance().mBullet, this.getVertexBufferObjectManager());
         /* Create a new animated sprite in the center of the scene */
 
-        mAnimatedVerticalBirdSprite = new AnimatedSprite(WIDTH / 2, HEIGHT, mBirdTextureRegion, 
+        mAnimatedVerticalBirdSprite = new AnimatedSprite(WIDTH / 2, HEIGHT, ResourceManager.getInstance().mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedVerticalBirdSprite.animate(new long[] { 200, 200, 200 }, 9, 11, true);
 
-        mAnimatedBirdSprite = new AnimatedSprite(120, 10, mBirdTextureRegion, 
+        mAnimatedBirdSprite = new AnimatedSprite(120, 10, ResourceManager.getInstance().mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedBirdSprite.animate(new long[] { 200, 200, 200 }, 6, 8, true);
 
-        mAnimatedSecondBirdSprite = new AnimatedSprite(0, 60, mBirdTextureRegion, 
+        mAnimatedSecondBirdSprite = new AnimatedSprite(0, 60, ResourceManager.getInstance().mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedSecondBirdSprite.animate(new long[] { 250, 250, 250 }, 6, 8, true);
 
-        mAnimatedThirdBirdSprite = new AnimatedSprite(60, 130, mBirdTextureRegion, 
+        mAnimatedThirdBirdSprite = new AnimatedSprite(60, 130, ResourceManager.getInstance().mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedThirdBirdSprite.animate(new long[] { 250, 250, 250 }, 6, 8, true);
         
-        mAnimatedFourthBirdSprite = new AnimatedSprite(10, 180, mBirdTextureRegion, 
+        mAnimatedFourthBirdSprite = new AnimatedSprite(10, 180, ResourceManager.getInstance().mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedFourthBirdSprite.animate(new long[] { 250, 250, 250 }, 6, 8, true);
         
-        mAnimatedFifthBirdSprite = new AnimatedSprite(100, 230, mBirdTextureRegion, 
+        mAnimatedFifthBirdSprite = new AnimatedSprite(100, 230, ResourceManager.getInstance().mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedFifthBirdSprite.animate(new long[] { 250, 260, 250 }, 6, 8, true);
         
-        mAnimatedSixthBirdSprite = new AnimatedSprite(20, 280, mBirdTextureRegion, 
+        mAnimatedSixthBirdSprite = new AnimatedSprite(20, 280, ResourceManager.getInstance().mBirdTextureRegion, 
                 this.getVertexBufferObjectManager());
         mAnimatedSixthBirdSprite.animate(new long[] { 250, 310, 250 }, 6, 8, true);
 
-        mAnimatedExplodeSprite = new AnimatedSprite(-100, -100, mExplodeTextureRegion, 
+        mAnimatedExplodeSprite = new AnimatedSprite(-100, -100, ResourceManager.getInstance().mExplodeTextureRegion, 
                 this.getVertexBufferObjectManager());
 
         mScene.attachChild(mCloudsSprite1);
@@ -268,14 +166,14 @@ public class MainActivity extends BaseGameActivity {
         mScene.attachChild(mAnimatedVerticalBirdSprite);
         mScene.attachChild(mAnimatedExplodeSprite);
 
-        final Text scoreLeft = new Text(0, 0, this.mScoreFont, "Score: 0", 10, this.getVertexBufferObjectManager());
+        final Text scoreLeft = new Text(0, 0, ResourceManager.getInstance().mScoreFont, "Score: 0", 10, this.getVertexBufferObjectManager());
         scoreLeft.setPosition(0, scoreLeft.getY());
-        this.mScoreTextMap.put(0, scoreLeft);
+        ResourceManager.getInstance().mScoreTextMap.put(0, scoreLeft);
         mScene.attachChild(scoreLeft);
 
-        final Text healthRight = new Text(0, 0, this.mScoreFont, "Health: 5", 10, this.getVertexBufferObjectManager());
+        final Text healthRight = new Text(0, 0, ResourceManager.getInstance().mScoreFont, "Health: 5", 10, this.getVertexBufferObjectManager());
         healthRight.setPosition(WIDTH-200, 0);
-        this.mScoreTextMap.put(1, healthRight);
+        ResourceManager.getInstance().mScoreTextMap.put(1, healthRight);
         mScene.attachChild(healthRight);
 
         /* Make the Bird move every 0.2 seconds. */
@@ -355,7 +253,7 @@ public class MainActivity extends BaseGameActivity {
                 {
                     if(helicopter.isAnimationRunning())
                     {
-                        mSound.play();
+                        ResourceManager.getInstance().mSound.play();
                         helicopter.setCurrentTileIndex(3);
                         helicopter.stopAnimation(3);
                         HEALTH_COUNTER--;
@@ -437,7 +335,7 @@ public class MainActivity extends BaseGameActivity {
         final PhysicsHandler physicsHandler = new PhysicsHandler(helicopter);
         helicopter.registerUpdateHandler(physicsHandler);
 
-        this.mDigitalOnScreenControl = new DigitalOnScreenControl(0, HEIGHT - this.mControllBtnRegion.getHeight(), this.mCamera, this.mControllBtnRegion, this.mOnScreenControlKnobTextureRegion, 0.1f, this.getVertexBufferObjectManager(), new IOnScreenControlListener() {
+        ResourceManager.getInstance().mDigitalOnScreenControl = new DigitalOnScreenControl(0, HEIGHT - ResourceManager.getInstance().mControllBtnRegion.getHeight(), this.mCamera, ResourceManager.getInstance().mControllBtnRegion, ResourceManager.getInstance().mOnScreenControlKnobTextureRegion, 0.1f, this.getVertexBufferObjectManager(), new IOnScreenControlListener() {
             @Override
             public void onControlChange(final BaseOnScreenControl pBaseOnScreenControl, final float pValueX, final float pValueY) {
                 float x = pValueX * 100;
@@ -446,15 +344,15 @@ public class MainActivity extends BaseGameActivity {
                 physicsHandler.setVelocity(x, y);
             }
         });
-        this.mDigitalOnScreenControl.getControlBase().setBlendFunction(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-        this.mDigitalOnScreenControl.getControlBase().setAlpha(0.5f);
-        this.mDigitalOnScreenControl.getControlBase().setScaleCenter(0, 128);
-        this.mDigitalOnScreenControl.getControlBase().setScale(1.25f);
-        this.mDigitalOnScreenControl.getControlKnob().setScale(1.25f);
-        this.mDigitalOnScreenControl.refreshControlKnobPosition();
-        this.mDigitalOnScreenControl.setAllowDiagonal(true);
+        ResourceManager.getInstance().mDigitalOnScreenControl.getControlBase().setBlendFunction(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        ResourceManager.getInstance().mDigitalOnScreenControl.getControlBase().setAlpha(0.5f);
+        ResourceManager.getInstance().mDigitalOnScreenControl.getControlBase().setScaleCenter(0, 128);
+        ResourceManager.getInstance().mDigitalOnScreenControl.getControlBase().setScale(1.25f);
+        ResourceManager.getInstance().mDigitalOnScreenControl.getControlKnob().setScale(1.25f);
+        ResourceManager.getInstance().mDigitalOnScreenControl.refreshControlKnobPosition();
+        ResourceManager.getInstance().mDigitalOnScreenControl.setAllowDiagonal(true);
 
-        mScene.setChildScene(this.mDigitalOnScreenControl);
+        mScene.setChildScene(ResourceManager.getInstance().mDigitalOnScreenControl);
         // Notify the callback that we're finished creating the scene, returning
         // mScene to the mEngine object (handled automatically)
 
@@ -485,8 +383,8 @@ public class MainActivity extends BaseGameActivity {
     */
     @Override
     public synchronized void onResumeGame() {
-        if(mMusic != null && !mMusic.isPlaying()){
-            mMusic.play();
+        if(ResourceManager.getInstance().mMusic != null && !ResourceManager.getInstance().mMusic.isPlaying()){
+            ResourceManager.getInstance().mMusic.play();
         }
         super.onResumeGame();
     }
@@ -496,14 +394,14 @@ public class MainActivity extends BaseGameActivity {
     */
     @Override
     public synchronized void onPauseGame() {
-        if(mMusic != null && mMusic.isPlaying()){
-            mMusic.pause();
+        if(ResourceManager.getInstance().mMusic != null && ResourceManager.getInstance().mMusic.isPlaying()){
+            ResourceManager.getInstance().mMusic.pause();
         }
         super.onPauseGame();
     }
-    
+
     public void updateScore(final int pPaddleID, final int pPoints) {
-        final Text scoreText = this.mScoreTextMap.get(pPaddleID);
+        final Text scoreText = ResourceManager.getInstance().mScoreTextMap.get(pPaddleID);
         if(pPoints >= 99)
             scoreText.setText("YOU WIN");
         else
@@ -514,7 +412,7 @@ public class MainActivity extends BaseGameActivity {
     }
 
     public void updateHealth(final int pPaddleID, final int pPoints) {
-        final Text scoreText = this.mScoreTextMap.get(pPaddleID);
+        final Text scoreText = ResourceManager.getInstance().mScoreTextMap.get(pPaddleID);
         if(pPoints <= 0)
             scoreText.setText("Game Over");
         else
